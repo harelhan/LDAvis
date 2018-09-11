@@ -39,17 +39,17 @@ LDAvis = function(to_select, json_file) {
 
     // Set global margins used for everything
     var margin = {
-        top: 30,
+        top: 40,
         right: 00,
-        bottom: 30,
-        left: 20
+        bottom: 00,
+        left: 00
     },
     mdswidth = 480,
     mdsheight = 480,
     barwidth = 400,
     barheight = 480,
     termwidth = 100, // width to add between two panels to display terms
-    mdsarea = mdsheight * mdswidth -300;
+    mdsarea = mdsheight * mdswidth;
     // controls how big the maximum circle can be
     // doesn't depend on data, only on mds width and height:
     var rMax = 60;  
