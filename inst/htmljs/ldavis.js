@@ -35,7 +35,7 @@ LDAvis = function(to_select, json_file) {
     color2 = "#d62728"; // 'highlight' color for selected topics and term-topic frequencies
 
     // Set the duration of each half of the transition:
-    var duration = 750;
+    var duration = 600;
 
     // Set global margins used for everything
     var margin = {
@@ -46,8 +46,8 @@ LDAvis = function(to_select, json_file) {
     },
     mdswidth = 480,
     mdsheight = 480,
-    barwidth = 300,
-    barheight = 300,
+    barwidth = 480,
+    barheight = 480,
     termwidth = 100, // width to add between two panels to display terms
     mdsarea = mdsheight * mdswidth;
     // controls how big the maximum circle can be
