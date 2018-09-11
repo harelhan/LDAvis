@@ -44,10 +44,10 @@ LDAvis = function(to_select, json_file) {
         bottom: 30,
         left: 20
     },
-    mdswidth = 400,
-    mdsheight = 400,
-    barwidth = 400,
-    barheight = 400,
+    mdswidth = 480,
+    mdsheight = 480,
+    barwidth = 300,
+    barheight = 300,
     termwidth = 100, // width to add between two panels to display terms
     mdsarea = mdsheight * mdswidth;
     // controls how big the maximum circle can be
