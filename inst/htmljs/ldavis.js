@@ -42,11 +42,11 @@ LDAvis = function(to_select, json_file) {
         top: 40,
         right: 00,
         bottom: 00,
-        left: 00
+        left: 40
     },
     mdswidth = 480,
     mdsheight = 480,
-    barwidth = 400,
+    barwidth = 300,
     barheight = 480,
     termwidth = 100, // width to add between two panels to display terms
     mdsarea = mdsheight * mdswidth;
