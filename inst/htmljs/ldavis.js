@@ -35,12 +35,12 @@ LDAvis = function(to_select, json_file) {
     color2 = "#d62728"; // 'highlight' color for selected topics and term-topic frequencies
 
     // Set the duration of each half of the transition:
-    var duration = 600;
+    var duration = 750;
 
     // Set global margins used for everything
     var margin = {
         top: 30,
-        right: 120,
+        right: 00,
         bottom: 30,
         left: 20
     },
