@@ -1,6 +1,7 @@
 /* Original code taken from https://github.com/cpsievert/LDAvis */
 /* Copyright 2013, AT&T Intellectual Property */
 /* MIT Licence */
+'use strict';
 
 LDAvis = function(to_select, data_or_file_name) {
 
