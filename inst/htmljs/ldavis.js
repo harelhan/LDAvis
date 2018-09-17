@@ -1,4 +1,8 @@
-LDAvis = function(to_select, json_file) {
+/* Original code taken from https://github.com/cpsievert/LDAvis */
+/* Copyright 2013, AT&T Intellectual Property */
+/* MIT Licence */
+
+LDAvis = function(to_select, data_or_file_name) {
 
     // This section sets up the logic for event handling
     var current_clicked = {
@@ -16,13 +20,11 @@ LDAvis = function(to_select, json_file) {
     vis_state = {
         lambda: 1,
         topic: 0,
-        term: "",
-        topic_clicked: 0,
-        term_clicked: ""
+        term: ""
     };
 
     // Set up a few 'global' variables to hold the data:
-    var K, // number of topics 
+    var K, // number of topics
     R, // number of terms to display in bar chart
     mdsData, // (x,y) locations and topic proportions
     mdsData3, // topic proportions for all terms in the viz
@@ -39,20 +41,20 @@ LDAvis = function(to_select, json_file) {
 
     // Set global margins used for everything
     var margin = {
-        top: 40,
-        right: 80,
-        bottom: 00,
-        left: 40
+        top: 30,
+        right: 30,
+        bottom: 70,
+        left: 30
     },
     mdswidth = 530,
     mdsheight = 530,
     barwidth = 530,
     barheight = 530,
-    termwidth = 100, // width to add between two panels to display terms
+    termwidth = 90, // width to add between two panels to display terms
     mdsarea = mdsheight * mdswidth;
     // controls how big the maximum circle can be
     // doesn't depend on data, only on mds width and height:
-    var rMax = 60;  
+    var rMax = 60;
 
     // proportion of area of MDS plot to which the sum of default topic circle areas is set
     var circle_prop = 0.25;
@@ -78,7 +80,7 @@ LDAvis = function(to_select, json_file) {
 
     //////////////////////////////////////////////////////////////////////////////
 
-    // sort array according to a specified object key name 
+    // sort array according to a specified object key name
     // Note that default is decreasing sort, set decreasing = -1 for increasing
     // adpated from http://stackoverflow.com/questions/16648076/sort-array-on-key-value
     function fancysort(key_name, decreasing) {
@@ -91,19 +93,9 @@ LDAvis = function(to_select, json_file) {
             return 0;
         };
     }
-    
-    // see if vis is being run as part of a shiny app
-    // (code adapted from https://github.com/ramnathv/htmlwidgets/blob/master/inst/www/htmlwidgets.js#L15)
-    var inShinyMode = typeof(window.Shiny) !== "undefined" && !!window.Shiny.outputBindings;
-    
-    if (inShinyMode) {
-      var outputId = to_select.substring(1, to_select.length);
-      var shinyClickedTopic = outputId + "_topic_click";
-      var shinyClickedTerm = outputId + "_term_click";
-    }
 
-    // The actual read-in of the data and main code:
-    d3.json(json_file, function(error, data) {
+
+    function visualize(data) {
 
         // set the number of topics to global variable K:
         K = data['mdsDat'].x.length;
@@ -178,11 +170,9 @@ LDAvis = function(to_select, json_file) {
                 // increment the value in the input box
                 document.getElementById(topicID).value = value_new;
                 topic_off(document.getElementById(topicID + value_old));
-                var oldtopic = document.getElementById(topicID + value_new);
-                topic_on(oldtopic);
+                topic_on(document.getElementById(topicID + value_new));
                 vis_state.topic = value_new;
                 state_save(true);
-                topic_click(oldtopic, value_new);
             })
 
         d3.select("#" + topicDown)
@@ -196,11 +186,9 @@ LDAvis = function(to_select, json_file) {
                 // increment the value in the input box
                 document.getElementById(topicID).value = value_new;
                 topic_off(document.getElementById(topicID + value_old));
-                var oldtopic = document.getElementById(topicID + value_new);
-                topic_on(oldtopic);
+                topic_on(document.getElementById(topicID + value_new));
                 vis_state.topic = value_new;
                 state_save(true);
-                topic_click(oldtopic, value_new);
             })
 
         d3.select("#" + topicID)
@@ -213,12 +201,10 @@ LDAvis = function(to_select, json_file) {
                 var value_new = document.getElementById(topicID).value;
                 if (!isNaN(value_new) && value_new > 0) {
                     value_new = Math.min(K, Math.max(1, value_new))
-                    var oldtopic = document.getElementById(topicID + value_new);
-                    topic_on(oldtopic);
+                    topic_on(document.getElementById(topicID + value_new));
                     vis_state.topic = value_new;
                     state_save(true);
                     document.getElementById(topicID).value = vis_state.topic;
-                    topic_click(oldtopic, value_new);
                 }
             })
 
@@ -244,7 +230,7 @@ LDAvis = function(to_select, json_file) {
             var xScale = d3.scale.linear()
 		.range([0, mdswidth])
 		.domain([xrange[0] - xpad * xdiff, xrange[1] + xpad * xdiff]);
-	    
+
             var yScale = d3.scale.linear()
 		.range([mdsheight, 0])
 		.domain([yrange[0] - 0.5*(xdiff - ydiff) - ypad*xdiff, yrange[1] + 0.5*(xdiff - ydiff) + ypad*xdiff]);
@@ -252,7 +238,7 @@ LDAvis = function(to_select, json_file) {
             var xScale = d3.scale.linear()
 		.range([0, mdswidth])
 		.domain([xrange[0] - 0.5*(ydiff - xdiff) - xpad*ydiff, xrange[1] + 0.5*(ydiff - xdiff) + xpad*ydiff]);
-	    
+
             var yScale = d3.scale.linear()
 		.range([mdsheight, 0])
 		.domain([yrange[0] - ypad * ydiff, yrange[1] + ypad * ydiff]);
@@ -315,7 +301,7 @@ LDAvis = function(to_select, json_file) {
     	var newLarge = Math.sqrt(0.10*mdsarea*circle_prop/Math.PI);
     	var cx = 10 + newLarge,
         cx2 = cx + 1.5 * newLarge;
-	
+
         // circle guide inspired from
         // http://www.nytimes.com/interactive/2012/02/13/us/politics/2013-budget-proposal-graphic.html?_r=0
         circleGuide = function(rSize, size) {
@@ -351,7 +337,7 @@ LDAvis = function(to_select, json_file) {
             .attr('class', "circleGuideTitle")
             .style("text-anchor", "left")
             .style("fontWeight", "bold")
-            .text("Marginal topic distribution");
+            .text("Marginal topic distribtion");
         d3.select("#leftpanel").append("text")
             .attr("x", cx2 + 10)
             .attr("y", mdsheight + 2 * newSmall)
@@ -421,7 +407,7 @@ LDAvis = function(to_select, json_file) {
                 topic_on(this);
             })
             .on("click", function(d) {
-                // prevent click event defined on the div container from firing 
+                // prevent click event defined on the div container from firing
                 // http://bl.ocks.org/jasondavies/3186840
                 d3.event.stopPropagation();
                 var old_topic = topicID + vis_state.topic;
@@ -432,7 +418,6 @@ LDAvis = function(to_select, json_file) {
                 document.getElementById(topicID).value = vis_state.topic = d.topics;
                 state_save(true);
                 topic_on(this);
-                topic_click(this, d.topics);
             })
             .on("mouseout", function(d) {
                 if (vis_state.topic != d.topics) topic_off(this);
@@ -567,9 +552,6 @@ LDAvis = function(to_select, json_file) {
         // 	term_on(this);
         // 	debugger;
         // })
-            .on("click", function(d) {
-                term_click(this, d.Term)
-            })
             .on("mouseout", function() {
                 vis_state.term = "";
                 term_off(this);
@@ -579,16 +561,16 @@ LDAvis = function(to_select, json_file) {
         var title = chart.append("text")
             .attr("x", barwidth/2)
             .attr("y", -30)
-            .attr("class", "bubble-tool") //  set class so we can remove it when highlight_off is called  
+            .attr("class", "bubble-tool") //  set class so we can remove it when highlight_off is called
             .style("text-anchor", "middle")
             .style("font-size", "16px")
             .text("Top-" + R + " Most Salient Terms");
-	
+
         title.append("tspan")
-	    .attr("baseline-shift", "super")	    
+	    .attr("baseline-shift", "super")
 	    .attr("font-size", "12px")
 	    .text("(1)");
-	
+
         // barchart axis adapted from http://bl.ocks.org/mbostock/1166403
         var xAxis = d3.svg.axis().scale(x)
             .orient("top")
@@ -640,7 +622,7 @@ LDAvis = function(to_select, json_file) {
 	    next.setAttribute("style", "margin-left: 5px");
 	    next.innerHTML = "Next Topic";
             topicDiv.appendChild(next);
-            
+
 	    var clear = document.createElement("button");
 	    clear.setAttribute("id", topicClear);
 	    clear.setAttribute("style", "margin-left: 5px");
@@ -672,7 +654,7 @@ LDAvis = function(to_select, json_file) {
 		.style("font-size", "10px")
 		.style("position", "absolute")
 		.text("(2)");
-	    
+
     	    var sliderDiv = document.createElement("div");
     	    sliderDiv.setAttribute("id", "sliderdiv");
     	    sliderDiv.setAttribute("style", "padding: 5px; height: 40px; width: 250px; float: right; margin-top: -5px; margin-right: 10px");
@@ -719,7 +701,7 @@ LDAvis = function(to_select, json_file) {
 		.attr("class", "slideraxis")
 		.attr("margin-top", "-10px")
 		.call(sliderAxis);
-            
+
 	    // Another strategy for tick marks on the slider; simpler, but not labels
 	    // var sliderTicks = document.createElement("datalist");
 	    // sliderTicks.setAttribute("id", "ticks");
@@ -1012,55 +994,44 @@ LDAvis = function(to_select, json_file) {
         // the circle argument should be the appropriate circle element
         function topic_on(circle) {
             if (circle == null) return null;
-            
-            // whenever the topic changes we have to remove the underline style
-            // from any clicked term
-            var old_term_clicked_id = termID + vis_state.term_clicked;
-            var topic_clicked_id = topicID + vis_state.topic_clicked;
-            if (vis_state.term_clicked != "" && circle.id != topic_clicked_id) {
-                var oldterm = document.getElementById(old_term_clicked_id);
-                if (oldterm != null) {
-                    oldterm.style.textDecoration = null;  
-                }
-            }
-            
+
 	    // grab data bound to this element
             var d = circle.__data__
             var Freq = Math.round(d.Freq * 10) / 10,
             topics = d.topics;
-            
+
 	    // change opacity and fill of the selected circle
             circle.style.opacity = highlight_opacity;
             circle.style.fill = color2;
-            
+
 	    // Remove 'old' bar chart title
             var text = d3.select(".bubble-tool");
             text.remove();
-            
+
 	    // append text with info relevant to topic of interest
             d3.select("#bar-freqs")
 		.append("text")
 		.attr("x", barwidth/2)
 		.attr("y", -30)
-		.attr("class", "bubble-tool") //  set class so we can remove it when highlight_off is called  
+		.attr("class", "bubble-tool") //  set class so we can remove it when highlight_off is called
 		.style("text-anchor", "middle")
 		.style("font-size", "16px")
 		.text("Top-" + R + " Most Relevant Terms for Topic " + topics + " (" + Freq + "% of tokens)");
-	    
+
             // grab the bar-chart data for this topic only:
             var dat2 = lamData.filter(function(d) {
                 return d.Category == "Topic" + topics
             });
-	    
+
             // define relevance:
             for (var i = 0; i < dat2.length; i++) {
                 dat2[i].relevance = lambda.current * dat2[i].logprob +
                     (1 - lambda.current) * dat2[i].loglift;
             }
-	    
+
             // sort by relevance:
             dat2.sort(fancysort("relevance"));
-	    
+
             // truncate to the top R tokens:
             var dat3 = dat2.slice(0, R);
 
@@ -1149,7 +1120,7 @@ LDAvis = function(to_select, json_file) {
             var title = d3.selectAll(".bubble-tool")
 		.text("Top-" + R + " Most Salient Terms");
 	    title.append("tspan")
-	     	.attr("baseline-shift", "super")	    
+	     	.attr("baseline-shift", "super")
 	     	.attr("font-size", 12)
 	     	.text(1);
 
@@ -1261,7 +1232,7 @@ LDAvis = function(to_select, json_file) {
                 .transition()
                 .attr("r", function(d) {
                     //return (rScaleCond(d));
-		    return (Math.sqrt(d*mdswidth*mdsheight*word_prop/Math.PI)); 
+		    return (Math.sqrt(d*mdswidth*mdsheight*word_prop/Math.PI));
                 });
 
             // re-bind mdsData so we can handle multiple selection
@@ -1317,7 +1288,7 @@ LDAvis = function(to_select, json_file) {
 
         // serialize the visualization state using fragment identifiers -- http://en.wikipedia.org/wiki/Fragment_identifier
         // location.hash holds the address information
-        
+
         var params = location.hash.split("&");
         if (params.length > 1) {
             vis_state.topic = params[0].split("=")[1];
@@ -1375,24 +1346,8 @@ LDAvis = function(to_select, json_file) {
         }
 
         function state_reset() {
-            
-            // set the style of any clicked term back to be non-underline                    
-            var old_term_clicked_id = termID + vis_state.term_clicked;
-            if (vis_state.term_clicked != "") {
-                var oldterm = document.getElementById(old_term_clicked_id);
-                if (oldterm != null) {
-                    oldterm.style.textDecoration = null;  
-                }
-            }
-                
             if (vis_state.topic > 0) {
                 topic_off(document.getElementById(topicID + vis_state.topic));
-                // set the style of any topic clicked to be back to regular style
-                // (no thick border around topic circle)
-                var old_topic_clicked_id = topicID + vis_state.topic_clicked;
-                if (vis_state.topic_clicked > 0) {
-                    document.getElementById(old_topic_clicked_id).style.strokeWidth = null;
-                }
             }
             if (vis_state.term != "") {
                 term_off(document.getElementById(termID + vis_state.term));
@@ -1400,75 +1355,15 @@ LDAvis = function(to_select, json_file) {
             vis_state.term = "";
             document.getElementById(topicID).value = vis_state.topic = 0;
             state_save(true);
-            
-            // make sure term ids are all correct
-            d3.selectAll(".terms").attr("id", function(d) {
-                return (termID + d.Term)
-            });
-            
-            // update shiny inputs to be null
-            if (inShinyMode) {
-                Shiny.onInputChange(shinyClickedTopic, null);
-                Shiny.onInputChange(shinyClickedTerm, null);
-            }
-            
-            // set state of topic_clicked to 0, so we can click on topic x, reset
-            // vis, then click on topic x again without any problems
-            vis_state.topic_clicked = 0;
-        }
-        
-        function topic_click(newtopic, newtopic_num) {
-            if (!inShinyMode) {
-              return null;
-            }
-            // set style of clicked topic to have thicker border
-            newtopic.style.strokeWidth = 2;
-            
-            // set style of old selected topic back to regular border
-            var old_topic_clicked_id = topicID + vis_state.topic_clicked;
-            if (vis_state.topic_clicked > 0 && old_topic_clicked_id != this.id) {
-                document.getElementById(old_topic_clicked_id).style.strokeWidth = null;
-            }
-            
-            // save state of topic clicked
-            vis_state.topic_clicked = newtopic_num;
-            
-            // update shiny topic input object to be new topic clicked 
-            Shiny.onInputChange(shinyClickedTopic, newtopic_num);
-        
-            // since topic changed, we want to reset the input term object back to null
-            Shiny.onInputChange(shinyClickedTerm, null);
-        }
-        
-        function term_click(newterm, newterm_term) {
-            if (!inShinyMode) {
-              return null;
-            }
-            // make sure term ids are up to date    
-            d3.selectAll(".terms").attr("id", function(d) {
-              return (termID + d.Term)
-            });
-                
-            // underline clicked term
-            newterm.style.textDecoration = "underline";
-            
-            // set style of old clicked term back to non-underline
-            var old_term_clicked_id = termID + vis_state.term_clicked;
-            if (old_term_clicked_id != newterm.id) {
-                var oldterm = document.getElementById(old_term_clicked_id);
-                if (oldterm != null) {
-                    oldterm.style.textDecoration = null;
-                }
-            }
-            
-            // save state of term clicked
-            vis_state.term_clicked = newterm_term;
-            
-            // update shiny term input object to know about new term clicked
-            Shiny.onInputChange(shinyClickedTerm, newterm_term);
         }
 
-    });
+    }
+
+    if (typeof data_or_file_name === 'string')
+        d3.json(data_or_file_name, function(error, data) {visualize(data);});
+    else
+        visualize(data_or_file_name);
+
     // var current_clicked = {
     //     what: "nothing",
     //     element: undefined
@@ -1477,4 +1372,3 @@ LDAvis = function(to_select, json_file) {
     //debugger;
 
 }
-
